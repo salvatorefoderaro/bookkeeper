@@ -1,0 +1,13 @@
+language: java
+jdk: 
+- openjdk11
+
+addons:
+ sonarcloud:
+  organization: salvatorefoderaro
+  token: b7a0b1e3863af12963082f380641e1fc259b8923
+script:
+- mvn very
+
+  
+ 
