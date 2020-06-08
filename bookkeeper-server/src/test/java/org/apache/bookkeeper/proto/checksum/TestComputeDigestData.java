@@ -66,22 +66,26 @@ public class TestComputeDigestData {
 	private long lastAddConfirmed;
 	private long entryId;
 	private long length;
+	private DigestType type;
 	private Object result;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{null, -1, -1, -1, Exception.class},
-			{generateEntry(0), 0, 1, 0, 0},
-			{generateEntry(1), 1, 2, 1, 0}
+			{null, -1, -1, -1, DigestType.HMAC, Exception.class},
+			{generateEntry(1), 1, 2, 1, DigestType.CRC32, 0},
+			{generateEntry(0), 0, 2, 0, DigestType.CRC32C, 0},
+			{generateEntry(1), 1, 2, 1, DigestType.DUMMY, 0}
+
 		});
 	}
 
-	public TestComputeDigestData(ByteBuf data, long lastAddConfirmed, long entryId, long length, Object result){
+	public TestComputeDigestData(ByteBuf data, long lastAddConfirmed, long entryId, long length, DigestType type, Object result){
 		this.data = data;
 		this.lastAddConfirmed = lastAddConfirmed;
 		this.entryId = entryId;
 		this.length = length;
+		this.type = type;
 		this.result = result;
 	}
 
@@ -95,7 +99,7 @@ public class TestComputeDigestData {
 			exceptions.expect(Exception.class);
 		}
 
-		DigestManager test = DigestManager.instantiate(1, "testPassword".getBytes(), DigestType.HMAC, UnpooledByteBufAllocator.DEFAULT, false);
+		DigestManager test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
 
 		ByteBuf test1 = generateEntry((int)length);
 		ByteBufList a = test.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
@@ -114,4 +118,5 @@ public class TestComputeDigestData {
 	}
 
 }  
+
 

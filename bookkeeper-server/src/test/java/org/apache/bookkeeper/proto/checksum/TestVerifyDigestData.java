@@ -67,47 +67,52 @@ public class TestVerifyDigestData {
 	private Object result;
 	private static int length = 10;
 	private int entryId;
-	private ByteBufList received;
+	private int ledgerId;
+	private DigestType type;
+	private ByteBufList receivedData;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{-1, null, Exception.class},
-			{0, generateDataWithDigest(1), 0},
-			{1, generateDataWithDigest(1), 0}
+			{0, 0, DigestType.HMAC,  generateDataWithDigest(0, 1, DigestType.HMAC), "Entry digest does not match"},
+			{-1, 1,  DigestType.DUMMY, generateDataWithDigest(1, 1, DigestType.DUMMY), "Entry digest does not match"},
+			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.CRC32), 0},
+			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), "Entry digest does not match"}
+
 		});
 	}
 
-	public TestVerifyDigestData(int entryId, ByteBufList received, Object result){
+	public TestVerifyDigestData(int ledgerId, int entryId, DigestType type, ByteBufList received, Object result){
 		this.entryId = entryId;
-		this.received = received;
+		this.ledgerId = ledgerId;
+		this.type = type;
+		this.receivedData = received;
 		this.result = result;
 	}
 
-	@Rule
-	public ExpectedException exceptions = ExpectedException.none();
 
 	@Test
-	public void testRead() throws Exception {
+	public void testRead() throws GeneralSecurityException{
 
-		if (!(result instanceof Integer)) {
-			exceptions.expect(Throwable.class);
-		}
 
-		DigestManager digest = DigestManager.instantiate(1, "testPassword".getBytes(), DigestType.HMAC, UnpooledByteBufAllocator.DEFAULT, false);
+
+		DigestManager digest = DigestManager.instantiate(ledgerId, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
 
 		ByteBuf test1 = generateEntry(length);
 
-		if ((result instanceof Integer)) {
-			Assert.assertEquals(test1, received.getBuffer(1));
-			Assert.assertEquals(test1, digest.verifyDigestAndReturnData(entryId, received.coalesce(received)));
-		}
+			Assert.assertEquals(test1, receivedData.getBuffer(1));
+			try {
+				Assert.assertEquals(test1, digest.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
+			} catch (BKDigestMatchException e) {
+				// TODO Auto-generated catch block
+				Assert.assertEquals(result, e.getMessage());
+			}
 	}
 
-	private static ByteBufList generateDataWithDigest(int entryId) throws GeneralSecurityException {
-		DigestManager digest = DigestManager.instantiate(1, "testPassword".getBytes(), DigestType.HMAC, UnpooledByteBufAllocator.DEFAULT, false);
+	private static ByteBufList generateDataWithDigest(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
+		DigestManager digest = DigestManager.instantiate(receivedLedgerId, "testPassword".getBytes(), receivedType, UnpooledByteBufAllocator.DEFAULT, false);
 		ByteBuf test1 = generateEntry(length);
-		ByteBufList a = digest.computeDigestAndPackageForSending(entryId, 0,  length, test1);
+		ByteBufList a = digest.computeDigestAndPackageForSending(receivedEntryId, 0,  length, test1);
 		return a;
 	}
 
@@ -119,4 +124,5 @@ public class TestVerifyDigestData {
 	}
 
 }  
+
 

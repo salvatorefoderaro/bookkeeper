@@ -20,6 +20,8 @@
 package org.apache.bookkeeper.bookie;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -27,7 +29,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -38,6 +42,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import org.apache.bookkeeper.bookie.BufferedChannel;
+import org.hamcrest.CoreMatchers;
 
 @RunWith(Parameterized.class)
 public class TestBufferedDataWrite {
@@ -49,13 +54,15 @@ public class TestBufferedDataWrite {
 	private int length;
 	private int unpersistedBytesBound = 0;
 	private Object result;
+	private BufferedChannel mine;
+	private static FileChannel fileChannel;
 
 	@Parameterized.Parameters
-	public static Collection BufferedChannelParameters() throws Exception {
+	public static Collection BufferedChannelParameters() {
 		return Arrays.asList(new Object[][] {
-			{-1, null, -2, -1, Exception.class},
+			{0, null, -2, -1, null},
 			{0, generateEntryWithoutWrite(0), 0, 1, 0},
-			{1, generateEntryWithoutWrite(1), 2, 2, Exception.class}
+			{1, generateEntryWithoutWrite(1), 2, 2, "Read past EOF"}
 		});
 	}
 
@@ -71,43 +78,37 @@ public class TestBufferedDataWrite {
 	@Rule
 	public ExpectedException exceptions = ExpectedException.none();
 
-	@Test
-	public void testRead() throws Exception {
+	@Before
+	public void beforeTest() throws IOException {
 
-		if (!(result instanceof Integer)) {
-			exceptions.expect(Exception.class);
-		}
-
-		BufferedChannel bufferedChannel = createObject(writeCapacity, unpersistedBytesBound);
-
-		src.markReaderIndex();
-		src.markWriterIndex();
-		src.writeBytes("T".getBytes());
-		System.out.println(length);
-
-		bufferedChannel.write(src);
-		System.out.println(length);
-
-		src.resetReaderIndex();
-		src.resetWriterIndex();
-		if ((result instanceof Integer)) {
-
-			Assert.assertEquals(result, bufferedChannel.read(dst, pos, length));
-		}
-
-	}
-
-	public static BufferedChannel createObject(int writeCapacity,  int unpersistedBytesBound) throws Exception {
 
 		ByteBufAllocator allocator = UnpooledByteBufAllocator.DEFAULT;
 		File newLogFile = File.createTempFile("test", "log");
 		newLogFile.deleteOnExit();
-		FileChannel fileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
+		fileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
 
-		BufferedChannel logChannel = new BufferedChannel(allocator, fileChannel,
+		mine = new BufferedChannel(allocator, fileChannel,
 				writeCapacity, 10, unpersistedBytesBound);
+		
+	}
+	
+	@After
+	public void close() throws IOException {
+		fileChannel.close();
+	}
+	
+	@Test
+	public void testRead() {
+		
+		src.writeBytes("T".getBytes());
 
-		return logChannel;
+		try {
+			mine.write(src);
+			Assert.assertEquals(result, mine.read(dst, pos, length));
+		} catch (Exception e) {
+			Assert.assertEquals(result, e.getMessage());
+		}
+
 	}
 
 	private static ByteBuf generateEntryWithoutWrite(int length) {
@@ -123,4 +124,5 @@ public class TestBufferedDataWrite {
 		return bb;
 	}
 }  
+
 
