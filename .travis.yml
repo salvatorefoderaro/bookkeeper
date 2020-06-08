@@ -7,4 +7,4 @@ addons:
   organization: salvatorefoderaro
   token: b7a0b1e3863af12963082f380641e1fc259b8923
 script:
-- mvn test -Dtest=TestBufferedDataRead -DfailIfNoTests=false sonar:sonar -Dsonar.projectKey=salvatorefoderaro_bookkeeper 
+- mvn verify -DfailIfNoTests=false sonar:sonar -Dsonar.projectKey=salvatorefoderaro_bookkeeper 
