@@ -65,18 +65,20 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 public class TestVerifyDigestData {
 
 	private Object result;
-	private static int length = 10;
+	private static int length = 1;
 	private int entryId;
 	private int ledgerId;
 	private DigestType type;
 	private ByteBufList receivedData;
-
+	private DigestManager digestManager;
+	private ByteBuf mineByteBuf;
+	
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
 			{0, 0, DigestType.HMAC,  generateDataWithDigest(0, 1, DigestType.HMAC), "Entry digest does not match"},
 			{-1, 1,  DigestType.DUMMY, generateDataWithDigest(1, 1, DigestType.DUMMY), "Entry digest does not match"},
-			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.CRC32), 0},
+			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.HMAC), 0},
 			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), "Entry digest does not match"}
 
 		});
@@ -91,18 +93,19 @@ public class TestVerifyDigestData {
 	}
 
 
+	@Before
+	public void beforeTest() throws GeneralSecurityException {
+		digestManager = DigestManager.instantiate(ledgerId, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
+		mineByteBuf = generateEntry(length);
+
+	}
+	
 	@Test
 	public void testRead() throws GeneralSecurityException{
 
-
-
-		DigestManager digest = DigestManager.instantiate(ledgerId, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
-
-		ByteBuf test1 = generateEntry(length);
-
-			Assert.assertEquals(test1, receivedData.getBuffer(1));
+			Assert.assertEquals(mineByteBuf, receivedData.getBuffer(1));
 			try {
-				Assert.assertEquals(test1, digest.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
+				Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
 			} catch (BKDigestMatchException e) {
 				// TODO Auto-generated catch block
 				Assert.assertEquals(result, e.getMessage());
