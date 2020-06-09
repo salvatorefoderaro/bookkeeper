@@ -25,7 +25,7 @@ import java.util.Collection;
 import org.apache.bookkeeper.proto.DataFormats.LedgerMetadataFormat.DigestType;
 import org.apache.bookkeeper.util.ByteBufList;
 import org.junit.Assert;
-
+import org.junit.Before;
 import org.junit.Test;
 
 import org.junit.runner.RunWith;
@@ -42,48 +42,42 @@ public class TestVerifyDigestLac {
 	private static int length = 10;
 	private int lacId;
 	private ByteBufList received;
+	private DigestManager digest;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{-1, null, null},
-			{0, generateLacWithDigest(0), (long)0},
-			{1, generateLacWithDigest(0), (long)0}
+			{null, null},
+			{generateLacWithDigest(-1), (long)-1},
+			{generateLacWithDigest(0), (long)0},
+			{generateLacWithDigest(1), (long)1}
 		});
 	}
 
-	public TestVerifyDigestLac(int lacId, ByteBufList received, Object result){
-		this.lacId = lacId;
+	public TestVerifyDigestLac(ByteBufList received, Object result){
 		this.received = received;
 		this.result = result;
 	}
 
+	@Before
+	public void makeDigestManager() throws GeneralSecurityException {
+		digest = DigestManager.instantiate(1, "testPassword".getBytes(), DigestType.HMAC, UnpooledByteBufAllocator.DEFAULT, false);
+	}
 
 	@Test
 	public void testRead() throws GeneralSecurityException {
 
-		DigestManager digest = DigestManager.instantiate(1, "testPassword".getBytes(), DigestType.HMAC, UnpooledByteBufAllocator.DEFAULT, false);
-
 			try {
 				Assert.assertEquals(result, digest.verifyDigestAndReturnLac(received.getBuffer(0)));
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				Assert.assertEquals(result, e.getMessage());
 			}
 	}
 	
-
 	private static ByteBufList generateLacWithDigest(int lacID) throws GeneralSecurityException {
 		DigestManager digest = DigestManager.instantiate(1, "testPassword".getBytes(), DigestType.HMAC, UnpooledByteBufAllocator.DEFAULT, false);
 		ByteBufList a = digest.computeDigestAndPackageForSendingLac(lacID);
 		return a;
-	}
-
-	private static ByteBuf generateEntry(int length) {
-		byte[] data = new byte[length];
-		ByteBuf bb = Unpooled.buffer(length);
-		bb.writeBytes(data);
-		return bb;
 	}
 
 }  
