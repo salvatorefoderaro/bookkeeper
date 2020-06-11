@@ -67,11 +67,11 @@ public class TestVerifyDigestLac {
 	@Test
 	public void testRead() throws GeneralSecurityException {
 
-			try {
-				Assert.assertEquals(result, digest.verifyDigestAndReturnLac(received.getBuffer(0)));
-			} catch (Exception e) {
-				Assert.assertEquals(result, e.getMessage());
-			}
+		try {
+			Assert.assertEquals(result, digest.verifyDigestAndReturnLac(received.getBuffer(0)));
+		} catch (Exception e) {
+			Assert.assertEquals(result, e.getMessage());
+		}
 	}
 	
 	private static ByteBufList generateLacWithDigest(int lacID) throws GeneralSecurityException {

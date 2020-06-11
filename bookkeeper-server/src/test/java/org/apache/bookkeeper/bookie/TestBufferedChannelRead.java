@@ -45,83 +45,78 @@ import org.apache.bookkeeper.bookie.BufferedChannel;
 import org.hamcrest.CoreMatchers;
 
 @RunWith(Parameterized.class)
-public class TestBufferedDataRead {
+public class TestBufferedChannelRead {
 
-	private ByteBuf src = generateEntryWithWrite(1);
-	private int writeCapacity;
-	private ByteBuf dst;
-	private long pos;
-	private int length;
-	private int unpersistedBytesBound = 0;
-	private Object result;
-	private BufferedChannel mine;
-	private static FileChannel fileChannel;
+	private ByteBuf srcBuffer = generateEntryWithWrite(8);
+	private int bufferedChannelCapacity;
+	private ByteBuf dstBuffer;
+	private long bufferedChannelPos;
+	private int bufferedChannelLength;
+	private int bufferedChannelUnpersistedBytesBound = 10;
+	private Object testResult;
+	private BufferedChannel bufferedChannel;
+	private static FileChannel bufferedChannelFileChannel;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() {
 		return Arrays.asList(new Object[][] {
-			{0, null, -2, -1, null},
-			{0, generateEntryWithoutWrite(0), 0, 1, 0},
-			{1, generateEntryWithoutWrite(1), 2, 2, "Read past EOF"}
+			{0, null, -1, 0, null},
+			{0, generateEntryWithoutWrite(), 0, 0, 0},
+			{1, generateEntryWithoutWrite(), 2, 2, 2}
 		});
 	}
 
-	public TestBufferedDataRead(int numOfWrites, ByteBuf dst, long pos, int length,
+	public TestBufferedChannelRead(int capacity, ByteBuf dst, long pos, int length,
 			Object result){
-		this.dst = dst;
-		this.pos = pos;
-		this.length = length;
-		this.writeCapacity = numOfWrites;
-		this.result = result;
+		this.dstBuffer = dst;
+		this.bufferedChannelPos = pos;
+		this.bufferedChannelLength = length;
+		this.bufferedChannelCapacity = capacity;
+		this.testResult = result;
 	}
-
-	@Rule
-	public ExpectedException exceptions = ExpectedException.none();
 
 	@Before
 	public void beforeTest() throws IOException {
 
-
 		ByteBufAllocator allocator = UnpooledByteBufAllocator.DEFAULT;
 		File newLogFile = File.createTempFile("test", "log");
 		newLogFile.deleteOnExit();
-		fileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
+		bufferedChannelFileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
 
-		mine = new BufferedChannel(allocator, fileChannel,
-				writeCapacity, 10, unpersistedBytesBound);
-		
+		bufferedChannel = new BufferedChannel(allocator, bufferedChannelFileChannel,
+				bufferedChannelCapacity, bufferedChannelUnpersistedBytesBound);
+		bufferedChannel.write(srcBuffer);
 	}
 	
 	@After
 	public void close() throws IOException {
-		fileChannel.close();
+		bufferedChannelFileChannel.close();
 	}
 	
 	@Test
 	public void testRead() {
-		
-		src.writeBytes("T".getBytes());
-
 		try {
-			mine.write(src);
-			Assert.assertEquals(result, mine.read(dst, pos, length));
+			 Assert.assertEquals(testResult, bufferedChannel.read(dstBuffer, bufferedChannelPos, bufferedChannelLength));		 
 		} catch (Exception e) {
-			Assert.assertEquals(result, e.getMessage());
+			Assert.assertEquals(testResult, e.getMessage());
 		}
-
 	}
 
-	private static ByteBuf generateEntryWithoutWrite(int length) {
-		return Unpooled.buffer(length);
+	private static ByteBuf generateEntryWithoutWrite() {
+		return Unpooled.buffer(1024);
 	}
 
-	private static ByteBuf generateEntryWithWrite(int length) {
+	private ByteBuf generateEntryWithWrite(int length) {
 		Random random = new Random();
 		byte[] data = new byte[length];
 		random.nextBytes(data);
-		ByteBuf bb = Unpooled.buffer(length);
-		bb.writeBytes(data);
-		return bb;
+		ByteBuf byteBuffer = Unpooled.buffer(1024);
+		byteBuffer.writeLong(1);
+		byteBuffer.writeLong(2);
+		byteBuffer.writeLong(3);
+		byteBuffer.writeLong(length);
+		byteBuffer.writeBytes(data);
+		return byteBuffer;
 	}
 }  
 

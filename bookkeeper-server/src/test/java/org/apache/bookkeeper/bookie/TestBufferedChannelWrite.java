@@ -21,13 +21,13 @@ package org.apache.bookkeeper.bookie;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -40,68 +40,72 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import org.apache.bookkeeper.bookie.BufferedChannel;
 
 @RunWith(Parameterized.class)
-public class TestBufferedDataWrite {
+public class TestBufferedChannelWrite {
 
 	private ByteBuf src;
 	private int writeCapacity = 100;
-	private int unpersistedBytesBound;
+	private long unpersistedBytesBound;
 	private Object result;
+	private BufferedChannel bufferedChannel;
+	private final static long HEADER_SIZE = 32L;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{ null, 0, Exception.class},
-			{generateEntryWithWrite(0), 1, 0},
-			{generateEntryWithWrite(1), 1, 0}
-		});
+			{ null, 0, (long)0},
+			{generateEntryWithWrite(0), 1, 0L},
+			{generateEntryWithWrite(1), 1, 1L + HEADER_SIZE}
+			});
 	}
 
-	public TestBufferedDataWrite(ByteBuf src, 
+	public TestBufferedChannelWrite(ByteBuf src, 
 			int unpersistedBytesBound, Object result){
 		this.src = src;
-		this.unpersistedBytesBound = unpersistedBytesBound;
+		this.unpersistedBytesBound = unpersistedBytesBound+HEADER_SIZE;
 		this.result = result;
 	}
 
-	@Rule
-	public ExpectedException exceptions = ExpectedException.none();
+	@Before
+	public void beforeTest() throws Exception {
+		bufferedChannel = createObject(writeCapacity, unpersistedBytesBound);
+		System.out.println("size" + bufferedChannel.fileChannel.size());
+	}
 
 	@Test
 	public void testWrite() throws Exception {
 
-		if (!(result instanceof Integer)) {
-			exceptions.expect(Exception.class);
+			try {
+				bufferedChannel.write(src);
+				Assert.assertEquals((long)result, bufferedChannel.fileChannel.size());
+			} catch (Exception e){
+			Assert.assertEquals(result, bufferedChannel.fileChannel.size());
 		}
-
-		BufferedChannel bufferedChannel = createObject(writeCapacity, unpersistedBytesBound);
-
-		src.markReaderIndex();
-		src.markWriterIndex();
-		src.writeBytes("T".getBytes());
-		bufferedChannel.write(src);
-
 	}
 
-	public static BufferedChannel createObject(int writeCapacity,  int unpersistedBytesBound) throws Exception {
+	public static BufferedChannel createObject(int capacity,  long unpersistedBytesBound) throws Exception {
 
 		ByteBufAllocator allocator = UnpooledByteBufAllocator.DEFAULT;
 		File newLogFile = File.createTempFile("test", "log");
 		newLogFile.deleteOnExit();
 		FileChannel fileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
 
-		BufferedChannel logChannel = new BufferedChannel(allocator, fileChannel,
-				writeCapacity, 10, unpersistedBytesBound);
+		BufferedChannel bufferedChannel = new BufferedChannel(allocator, fileChannel,
+				capacity, unpersistedBytesBound);
 
-		return logChannel;
+		return bufferedChannel;
 	}
 
 	private static ByteBuf generateEntryWithWrite(int length) {
 		Random random = new Random();
 		byte[] data = new byte[length];
 		random.nextBytes(data);
-		ByteBuf bb = Unpooled.buffer(length);
-		bb.writeBytes(data);
-		return bb;
+		ByteBuf byteBuffer = Unpooled.buffer(1024);
+		byteBuffer.writeLong(0);
+		byteBuffer.writeLong(1);
+		byteBuffer.writeLong(2);
+		byteBuffer.writeLong(length);
+		byteBuffer.writeBytes(data);
+		return byteBuffer;
 	}
 
 }  

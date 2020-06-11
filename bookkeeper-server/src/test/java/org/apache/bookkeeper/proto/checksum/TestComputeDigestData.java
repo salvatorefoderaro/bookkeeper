@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
@@ -64,15 +65,19 @@ public class TestComputeDigestData {
 
 	private ByteBuf data;
 	private long lastAddConfirmed;
-	private long entryId;
+	private static long ledgerId;
+	private static long entryId;
 	private long length;
+	private static long lac;
 	private DigestType type;
 	private Object result;
+	private DigestManager test;
+	private ByteBuf test1;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{null, -1, -1, -1, DigestType.HMAC, Exception.class},
+			{null, -1, -1, 0, DigestType.HMAC, NullPointerException.class},
 			{generateEntry(1), 1, 2, 1, DigestType.CRC32, 0},
 			{generateEntry(0), 0, 2, 0, DigestType.CRC32C, 0},
 			{generateEntry(1), 1, 2, 1, DigestType.DUMMY, 0}
@@ -89,30 +94,31 @@ public class TestComputeDigestData {
 		this.result = result;
 	}
 
-	@Rule
-	public ExpectedException exceptions = ExpectedException.none();
+	@Before
+	public void setUp() throws GeneralSecurityException {
+		test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
+		test1 = generateEntry((int)length);
+	}
 
 	@Test
-	public void testRead() throws Exception {
+	public void testRead() {
 
-		if (!(result instanceof Integer)) {
-			exceptions.expect(Exception.class);
+		try {
+			ByteBufList a = test.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
+			Assert.assertEquals(test1.readLong(), a.getBuffer(1).readLong());
+			
+		} catch (Exception e) {
+			Assert.assertEquals(result, e.getClass());
 		}
-
-		DigestManager test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
-
-		ByteBuf test1 = generateEntry((int)length);
-		ByteBufList a = test.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
-
-		if ((result instanceof Integer)) {
-			Assert.assertEquals(test1, a.getBuffer(1));
-		}
-
 	}
 
 	private static ByteBuf generateEntry(int length) {
 		byte[] data = new byte[length];
-		ByteBuf bb = Unpooled.buffer(length);
+		ByteBuf bb = Unpooled.buffer(1024);
+		bb.writeLong(ledgerId);
+		bb.writeLong(entryId);
+		bb.writeLong(lac);
+		bb.writeLong(length);
 		bb.writeBytes(data);
 		return bb;
 	}

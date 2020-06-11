@@ -76,10 +76,10 @@ public class TestVerifyDigestData {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{0, 0, DigestType.HMAC,  generateDataWithDigest(0, 1, DigestType.HMAC), "Entry digest does not match"},
-			{-1, 1,  DigestType.DUMMY, generateDataWithDigest(1, 1, DigestType.DUMMY), "Entry digest does not match"},
-			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.HMAC), 0},
-			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), "Entry digest does not match"}
+			{0, 0, DigestType.HMAC,  generateDataWithDigest(0, 1, DigestType.HMAC), BKDigestMatchException.class},
+			{-1, 1,  DigestType.DUMMY, generateDataWithDigest(1, 1, DigestType.DUMMY), BKDigestMatchException.class},
+			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
+			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class}
 
 		});
 	}
@@ -108,7 +108,7 @@ public class TestVerifyDigestData {
 				Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
 			} catch (BKDigestMatchException e) {
 				// TODO Auto-generated catch block
-				Assert.assertEquals(result, e.getMessage());
+				Assert.assertEquals(result, e.getClass());
 			}
 	}
 
