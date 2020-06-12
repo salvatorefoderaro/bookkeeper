@@ -84,7 +84,7 @@ public abstract class DigestManager {
     }
 
     public static byte[] generateMasterKey(byte[] password) throws NoSuchAlgorithmException {
-        return password.length > 0 ? MacDigestManager.genDigest("ledger", password) : MacDigestManager.EMPTY_LEDGER_KEY;
+    	return password.length > 0 ? MacDigestManager.genDigest("ledger", password) : MacDigestManager.EMPTY_LEDGER_KEY;
     }
 
     /**
@@ -205,7 +205,6 @@ public abstract class DigestManager {
         ByteBuf digest = allocator.buffer(macCodeLength);
         try {
             populateValueAndReset(digest);
-
             if (digest.compareTo(dataReceived.slice(LAC_METADATA_LENGTH, macCodeLength)) != 0) {
                 logger.error("Mac mismatch for ledger-id LAC: " + ledgerId);
                 throw new BKDigestMatchException();

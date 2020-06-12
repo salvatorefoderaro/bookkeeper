@@ -36,10 +36,12 @@ import org.apache.bookkeeper.bookie.EntryLogger;
 import org.apache.bookkeeper.client.BKException;
 import org.apache.bookkeeper.client.BookKeeper;
 import org.apache.bookkeeper.client.LedgerHandle;
+import org.apache.bookkeeper.client.BKException.BKDigestMatchException;
 import org.apache.bookkeeper.stats.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.bookkeeper.conf.ServerConfiguration;
 import org.apache.bookkeeper.proto.DataFormats.LedgerMetadataFormat.DigestType;
+import org.apache.bookkeeper.proto.checksum.DigestManager.RecoveryData;
 import org.apache.bookkeeper.util.ByteBufList;
 import org.apache.bookkeeper.util.DiskChecker;
 import org.apache.commons.io.FileUtils;
@@ -54,6 +56,9 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -61,34 +66,34 @@ import io.netty.buffer.Unpooled;
 import io.netty.buffer.UnpooledByteBufAllocator;
 
 @RunWith(Parameterized.class)
-public class TestComputeDigestData {
+public class TestDigestManagerRecoveryData {
 
-	private ByteBuf data;
-	private long lastAddConfirmed;
+	private ByteBufList data;
 	private static long ledgerId;
 	private static long entryId;
-	private long length;
+	private static long length;
 	private static long lac;
+	
 	private DigestType type;
 	private Object result;
 	private DigestManager test;
-	private ByteBuf test1;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
-			{null, -1, -1, 0, DigestType.HMAC, NullPointerException.class},
-			{generateEntry(1), 1, 2, 1, DigestType.CRC32, 0},
-			{generateEntry(0), 0, 2, 0, DigestType.CRC32C, 0},
-			{generateEntry(1), 1, 2, 1, DigestType.DUMMY, 0}
+			{null, -1, 0, DigestType.HMAC, NullPointerException.class},
+			{generateLastAddConfirmed(1, DigestType.CRC32, 1, true), 2, 1, DigestType.CRC32, BKDigestMatchException.class},
+			{generateLastAddConfirmed(-1, DigestType.CRC32, 1, true), 2, 0, DigestType.CRC32C, BKDigestMatchException.class},
+			{generateLastAddConfirmed(-1, DigestType.CRC32, 1, true), 2, 3, DigestType.DUMMY, (long)1}
 
 		});
 	}
+	
+	@Rule 
+	public MockitoRule rule = MockitoJUnit.rule();
 
-	public TestComputeDigestData(ByteBuf data, long lastAddConfirmed, long entryId, long length, DigestType type, Object result){
+	public TestDigestManagerRecoveryData(ByteBufList data, long entryId, long length, DigestType type, Object result){
 		this.data = data;
-		this.lastAddConfirmed = lastAddConfirmed;
-		this.entryId = entryId;
 		this.length = length;
 		this.type = type;
 		this.result = result;
@@ -96,32 +101,43 @@ public class TestComputeDigestData {
 
 	@Before
 	public void setUp() throws GeneralSecurityException {
-		test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
-		test1 = generateEntry((int)length);
+		if (type == DigestType.CRC32)
+			test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
+		else
+			test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, true);
+
 	}
 
 	@Test
 	public void testRead() {
 
 		try {
-			ByteBufList a = test.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
-			Assert.assertEquals(test1.readLong(), a.getBuffer(1).readLong());
-			
+			RecoveryData a = test.verifyDigestAndReturnLastConfirmed(data.getBuffer(0));
+			Assert.assertEquals(result, a.getLastAddConfirmed());
+			Assert.assertEquals(0, a.getLength());
 		} catch (Exception e) {
 			Assert.assertEquals(result, e.getClass());
 		}
 	}
-
+	
+	private static ByteBufList generateLastAddConfirmed(int lacID, DigestType digestType, long ledgerID, boolean useV2Protocol) throws GeneralSecurityException {
+		DigestManager digest = DigestManager.instantiate(ledgerID, "testPassword".getBytes(), digestType, UnpooledByteBufAllocator.DEFAULT, useV2Protocol);
+		ByteBufList a = digest.computeDigestAndPackageForSending(entryId, 1, length, generateEntry(20));
+		return a;
+	}
+	
 	private static ByteBuf generateEntry(int length) {
 		byte[] data = new byte[length];
 		ByteBuf bb = Unpooled.buffer(1024);
-		bb.writeLong(ledgerId);
-		bb.writeLong(entryId);
-		bb.writeLong(lac);
-		bb.writeLong(length);
+		bb.writeLong(ledgerId); // Ledger
+		bb.writeLong(entryId); // Entry
+		bb.writeLong(lac); // LAC
+		bb.writeLong(length); // Length
 		bb.writeBytes(data);
 		return bb;
 	}
+
+
 
 }  
 
