@@ -21,6 +21,8 @@ package org.apache.bookkeeper.proto.checksum;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.apache.bookkeeper.bookie.BufferedChannel;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,8 +40,8 @@ public class TestDigestManagerGenerateMasterKey {
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
 			{null, NullPointerException.class},
-			{"".getBytes(), MacDigestManager.EMPTY_LEDGER_KEY},
-			{"a".getBytes(), DigestManager.generateMasterKey("a".getBytes())}
+			{"".getBytes(), true},
+			{"a".getBytes(), true}
 
 		});
 	}
@@ -53,7 +55,7 @@ public class TestDigestManagerGenerateMasterKey {
 	public void testRead() {
 
 		try {
-			Assert.assertEquals(0,0);
+			Assert.assertEquals(result, java.util.Arrays.equals(MacDigestManager.genDigest("ledger", data), DigestManager.generateMasterKey(data)));
 		} catch (Exception e) {
 			Assert.assertEquals(result, e.getClass());
 		}

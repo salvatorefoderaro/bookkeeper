@@ -100,9 +100,9 @@ public abstract class DigestManager {
             ByteBuf data) {
         ByteBuf headersBuffer;
         if (this.useV2Protocol) {
-            headersBuffer = allocator.buffer(METADATA_LENGTH + macCodeLength);
+            headersBuffer = allocator.buffer(METADATA_LENGTH - macCodeLength);
         } else {
-            headersBuffer = Unpooled.buffer(METADATA_LENGTH + macCodeLength);
+            headersBuffer = Unpooled.buffer(METADATA_LENGTH - macCodeLength);
         }
         headersBuffer.writeLong(ledgerId);
         headersBuffer.writeLong(entryId);
@@ -150,7 +150,7 @@ public abstract class DigestManager {
     private void verifyDigest(long entryId, ByteBuf dataReceived, boolean skipEntryIdCheck)
             throws BKDigestMatchException {
 
-        if ((METADATA_LENGTH + macCodeLength) > dataReceived.readableBytes()) {
+        if ((METADATA_LENGTH - macCodeLength) > dataReceived.readableBytes()) {
             logger.error("Data received is smaller than the minimum for this digest type. "
                     + " Either the packet it corrupt, or the wrong digest is configured. "
                     + " Digest type: {}, Packet Length: {}",

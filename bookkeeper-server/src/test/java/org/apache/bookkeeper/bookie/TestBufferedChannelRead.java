@@ -37,6 +37,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -54,17 +60,28 @@ public class TestBufferedChannelRead {
 	private int bufferedChannelLength;
 	private int bufferedChannelUnpersistedBytesBound = 10;
 	private Object testResult;
+	
+	@Mock
 	private BufferedChannel bufferedChannel;
 	private static FileChannel bufferedChannelFileChannel;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() {
 		return Arrays.asList(new Object[][] {
-			{0, null, -1, 0, null},
+			{0, null, -1, 0, NullPointerException.class},
 			{0, generateEntryWithoutWrite(), 0, 0, 0},
-			{1, generateEntryWithoutWrite(), 2, 2, 2}
+			
+			// Coverage
+			{10, generateEntryWithoutWrite(), 0, 1, 8},
+			{8, generateEntryWithoutWrite(), 1, 1, 7},
+			{11, generateEntryWithoutWrite(), 0, 1, IOException.class},
+
+			// Coverage 274 possibile mock, vedere slide. Stessa cosa 258
 		});
 	}
+	
+	@Rule 
+	public MockitoRule rule = MockitoJUnit.rule();
 
 	public TestBufferedChannelRead(int capacity, ByteBuf dst, long pos, int length,
 			Object result){
@@ -78,6 +95,7 @@ public class TestBufferedChannelRead {
 	@Before
 	public void beforeTest() throws IOException {
 
+	
 		ByteBufAllocator allocator = UnpooledByteBufAllocator.DEFAULT;
 		File newLogFile = File.createTempFile("test", "log");
 		newLogFile.deleteOnExit();
@@ -85,6 +103,8 @@ public class TestBufferedChannelRead {
 
 		bufferedChannel = new BufferedChannel(allocator, bufferedChannelFileChannel,
 				bufferedChannelCapacity, bufferedChannelUnpersistedBytesBound);
+		if (bufferedChannelCapacity == 11)
+			srcBuffer = generateEntryWithWrite(0);
 		bufferedChannel.write(srcBuffer);
 	}
 	
@@ -98,7 +118,7 @@ public class TestBufferedChannelRead {
 		try {
 			 Assert.assertEquals(testResult, bufferedChannel.read(dstBuffer, bufferedChannelPos, bufferedChannelLength));		 
 		} catch (Exception e) {
-			Assert.assertEquals(testResult, e.getMessage());
+			Assert.assertEquals(testResult, e.getClass());
 		}
 	}
 
@@ -115,6 +135,7 @@ public class TestBufferedChannelRead {
 		byteBuffer.writeLong(2);
 		byteBuffer.writeLong(3);
 		byteBuffer.writeLong(length);
+		byteBuffer.resetWriterIndex();
 		byteBuffer.writeBytes(data);
 		return byteBuffer;
 	}

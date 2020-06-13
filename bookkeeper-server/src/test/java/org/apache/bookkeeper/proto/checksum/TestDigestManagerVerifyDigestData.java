@@ -114,7 +114,6 @@ public class TestDigestManagerVerifyDigestData {
 			try {
 				Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
 			} catch (BKDigestMatchException e) {
-				// TODO Auto-generated catch block
 				Assert.assertEquals(result, e.getClass());
 			}
 	}

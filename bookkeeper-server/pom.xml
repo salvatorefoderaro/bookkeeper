@@ -191,12 +191,10 @@
         <configuration>
           <targetClasses>
             <param>org.apache.bookkeeper.bookie.BufferedChannel</param>
-            <param>org.apache.bookkeeper.proto.checksum.DigestManager</param>
           </targetClasses>
           <targetTests>
-            <param>org.apache.bookkeeper.bookie.TestBufferedDataRead</param>
-            <param>org.apache.bookkeeper.bookie.TestBufferedDataWrite</param>
-            <param>org.apache.bookkeeper.proto.checksum.TestComputeDigestData</param>
+            <param>org.apache.bookkeeper.bookie.TestBufferedChannelRead</param>
+            <param>org.apache.bookkeeper.bookie.TestBufferedChannelWrite</param>
           </targetTests>
         </configuration>
       </plugin>

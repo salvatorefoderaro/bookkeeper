@@ -43,19 +43,39 @@ import org.apache.bookkeeper.bookie.BufferedChannel;
 public class TestBufferedChannelWrite {
 
 	private ByteBuf src;
-	private int writeCapacity = 100;
+	private int writeCapacity = 40;
 	private long unpersistedBytesBound;
 	private Object result;
+	
 	private BufferedChannel bufferedChannel;
 	private final static long HEADER_SIZE = 32L;
+
+
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
 			{ null, 0, (long)0},
 			{generateEntryWithWrite(0), 1, 0L},
-			{generateEntryWithWrite(1), 1, 1L + HEADER_SIZE}
+			{generateEntryWithWrite(1), 1, 1L + HEADER_SIZE},
+			
+			// Coverage
+			{generateEntryWithWrite(1), -33, (long)0},
+			
+			// Mutante 89
+			{generateEntryWithWrite(1), -32, (long)0},
+			
+			{generateEntryWithWrite(12), -33, (long)40},
+			
+			{generateEntryWithWrite(12), 12, (long)44}
+
+
 			});
+		
+			// Mutante 140 non cambia nulla
+		
+		
+			// Coverage
 	}
 
 	public TestBufferedChannelWrite(ByteBuf src, 
@@ -68,7 +88,6 @@ public class TestBufferedChannelWrite {
 	@Before
 	public void beforeTest() throws Exception {
 		bufferedChannel = createObject(writeCapacity, unpersistedBytesBound);
-		System.out.println("size" + bufferedChannel.fileChannel.size());
 	}
 
 	@Test
@@ -78,7 +97,7 @@ public class TestBufferedChannelWrite {
 				bufferedChannel.write(src);
 				Assert.assertEquals((long)result, bufferedChannel.fileChannel.size());
 			} catch (Exception e){
-			Assert.assertEquals(result, bufferedChannel.fileChannel.size());
+				Assert.assertEquals(result, bufferedChannel.fileChannel.size());
 		}
 	}
 
