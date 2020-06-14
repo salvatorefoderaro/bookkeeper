@@ -249,7 +249,6 @@ public class BufferedChannel extends BufferedReadChannel implements Closeable {
 			if (writeBuffer != null && writeBufferStartPosition.get() <= pos) {
 				int positionInBuffer = (int) (pos - writeBufferStartPosition.get());
 				int bytesToCopy = Math.min(writeBuffer.writerIndex() - positionInBuffer, dest.writableBytes());
-				System.out.println(length + " " + bytesToCopy);
 				if (bytesToCopy == 0) {
 					throw new IOException("Read past EOF");
 				}

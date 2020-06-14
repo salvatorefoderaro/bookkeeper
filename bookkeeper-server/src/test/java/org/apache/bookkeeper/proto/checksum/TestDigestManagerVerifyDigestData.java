@@ -113,12 +113,12 @@ public class TestDigestManagerVerifyDigestData {
 	@Test
 	public void testRead() throws GeneralSecurityException{
 
-			Assert.assertEquals(mineByteBuf, receivedData.getBuffer(1));
-			try {
-				Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
-			} catch (Exception e) {
-				Assert.assertEquals(result, e.getClass());
-			}
+		Assert.assertEquals(mineByteBuf, receivedData.getBuffer(1));
+		try {
+			Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
+		} catch (Exception e) {
+			Assert.assertEquals(result, e.getClass());
+		}
 	}
 
 	private static ByteBufList generateDataWithDigest(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
@@ -130,13 +130,6 @@ public class TestDigestManagerVerifyDigestData {
 	
 	private static ByteBufList generateBadDataWithDigest(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
 		ByteBuf test1 = generateEntry(length);
-		ByteBuf badHeader = Unpooled.buffer(length);
-		// badHeader.writeLong(10);
-		return ByteBufList.get(badHeader, test1);
-	}
-	
-	private static ByteBufList generateDataWithDigestMutation(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
-		ByteBuf test1 = generateEntryMutation(length);
 		ByteBuf badHeader = Unpooled.buffer(length);
 		return ByteBufList.get(badHeader, test1);
 	}

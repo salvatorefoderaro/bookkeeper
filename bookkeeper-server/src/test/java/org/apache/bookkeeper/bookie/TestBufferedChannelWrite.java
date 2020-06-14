@@ -20,12 +20,14 @@
 package org.apache.bookkeeper.bookie;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,8 +52,6 @@ public class TestBufferedChannelWrite {
 	private BufferedChannel bufferedChannel;
 	private final static long HEADER_SIZE = 32L;
 
-
-
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
@@ -59,8 +59,9 @@ public class TestBufferedChannelWrite {
 			{generateEntryWithWrite(0), 1, 0L},
 			{generateEntryWithWrite(1), 1, 1L + HEADER_SIZE},
 			
-			// Coverage
+			 // Coverage
 			{generateEntryWithWrite(1), -33, (long)0},
+			
 			
 			// Mutante 89
 			{generateEntryWithWrite(1), -32, (long)0},
@@ -68,7 +69,6 @@ public class TestBufferedChannelWrite {
 			{generateEntryWithWrite(12), -33, (long)40},
 			
 			{generateEntryWithWrite(12), 12, (long)44}
-
 
 			});
 		
@@ -87,6 +87,11 @@ public class TestBufferedChannelWrite {
 	@Before
 	public void beforeTest() throws Exception {
 		bufferedChannel = createObject(writeCapacity, unpersistedBytesBound);
+	}
+	
+	@After
+	public void close() throws IOException {
+		bufferedChannel.close();
 	}
 
 	@Test

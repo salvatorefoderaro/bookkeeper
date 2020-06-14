@@ -59,36 +59,40 @@ public class TestBufferedChannelRead {
 	private long bufferedChannelPos;
 	private int bufferedChannelLength;
 	private int bufferedChannelUnpersistedBytesBound = 10;
+	private boolean resetIndex;
 	private Object testResult;
 	
-	@Mock
 	private BufferedChannel bufferedChannel;
 	private static FileChannel bufferedChannelFileChannel;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() {
 		return Arrays.asList(new Object[][] {
-			{0, null, -1, 0, 0},
-			{0, generateEntryWithoutWrite(), 0, 0, 0},
+			{0, null, -1, 0, true,0},
+			{0, generateEntryWithoutWrite(), 0, 0, false, 0},
 			
 			// Coverage
-			{10, generateEntryWithoutWrite(), 0, 1, 8},
-			{8, generateEntryWithoutWrite(), 1, 1, 7},
-			{11, generateEntryWithoutWrite(), 0, 1, IOException.class},
+			{10, generateEntryWithoutWrite(), 0, 1, false,10},
+			{8, generateEntryWithoutWrite(), 1, 1, false,8},
+			{11, generateEntryWithoutWrite(), 0, 1, true, 8},
+			{8, generateEntryWithoutWrite(), 1, 1, true, 7},
+			{11, generateEntryWithoutWrite(), 0, 1, false, 11},
+			{11, generateEntryWithoutWrite(), 20, 20, false, 20},
 
 			// Coverage 274 possibile mock, vedere slide. Stessa cosa 258
+			// Mutante 251
+			{11, generateEntryWithoutWrite(), 8, 1, true, IOException.class},
+
 		});
 	}
 	
-	@Rule 
-	public MockitoRule rule = MockitoJUnit.rule();
-
-	public TestBufferedChannelRead(int capacity, ByteBuf dst, long pos, int length,
+	public TestBufferedChannelRead(int capacity, ByteBuf dst, long pos, int length, boolean resetIndex,
 			Object result){
 		this.dstBuffer = dst;
 		this.bufferedChannelPos = pos;
 		this.bufferedChannelLength = length;
 		this.bufferedChannelCapacity = capacity;
+		this.resetIndex = resetIndex;
 		this.testResult = result;
 	}
 
@@ -103,8 +107,10 @@ public class TestBufferedChannelRead {
 
 		bufferedChannel = new BufferedChannel(allocator, bufferedChannelFileChannel,
 				bufferedChannelCapacity, bufferedChannelUnpersistedBytesBound);
-		if (bufferedChannelCapacity == 11)
-			srcBuffer = generateEntryWithWrite(0);
+		if (resetIndex)
+			srcBuffer = generateEntryWithWriteResetIndex(8);
+		else
+			srcBuffer = generateEntryWithWrite(8);
 		bufferedChannel.write(srcBuffer);
 	}
 	
@@ -126,7 +132,8 @@ public class TestBufferedChannelRead {
 		return Unpooled.buffer(1024);
 	}
 
-	private ByteBuf generateEntryWithWrite(int length) {
+	
+	private ByteBuf generateEntryWithWriteResetIndex(int length) {
 		Random random = new Random();
 		byte[] data = new byte[length];
 		random.nextBytes(data);
@@ -136,6 +143,19 @@ public class TestBufferedChannelRead {
 		byteBuffer.writeLong(3);
 		byteBuffer.writeLong(length);
 		byteBuffer.resetWriterIndex();
+		byteBuffer.writeBytes(data);
+		return byteBuffer;
+	}
+	
+	private ByteBuf generateEntryWithWrite(int length) {
+		Random random = new Random();
+		byte[] data = new byte[length];
+		random.nextBytes(data);
+		ByteBuf byteBuffer = Unpooled.buffer(1024);
+		byteBuffer.writeLong(1);
+		byteBuffer.writeLong(2);
+		byteBuffer.writeLong(3);
+		byteBuffer.writeLong(length);
 		byteBuffer.writeBytes(data);
 		return byteBuffer;
 	}
