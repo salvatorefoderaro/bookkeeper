@@ -68,7 +68,7 @@ public class TestBufferedChannelRead {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() {
 		return Arrays.asList(new Object[][] {
-			{0, null, -1, 0, NullPointerException.class},
+			{0, null, -1, 0, 0},
 			{0, generateEntryWithoutWrite(), 0, 0, 0},
 			
 			// Coverage

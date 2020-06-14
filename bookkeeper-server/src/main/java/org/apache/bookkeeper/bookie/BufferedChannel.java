@@ -239,14 +239,17 @@ public class BufferedChannel extends BufferedReadChannel implements Closeable {
 	@Override
 	public synchronized int read(ByteBuf dest, long pos, int length) throws IOException {
 		long prevPos = pos;
-		if (dest.writableBytes() == 0)
-			length = 0;
+		
+			/* if (dest.writableBytes() == 0)
+				length = 0;
+			*/
+		
 		while (length > 0) {
 			// check if it is in the write buffer
 			if (writeBuffer != null && writeBufferStartPosition.get() <= pos) {
 				int positionInBuffer = (int) (pos - writeBufferStartPosition.get());
 				int bytesToCopy = Math.min(writeBuffer.writerIndex() - positionInBuffer, dest.writableBytes());
-
+				System.out.println(length + " " + bytesToCopy);
 				if (bytesToCopy == 0) {
 					throw new IOException("Read past EOF");
 				}

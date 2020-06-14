@@ -190,11 +190,14 @@
         <version>1.4.11</version>
         <configuration>
           <targetClasses>
-            <param>org.apache.bookkeeper.bookie.BufferedChannel</param>
+            <param>org.apache.bookkeeper.proto.checksum.DigestManager</param>
           </targetClasses>
           <targetTests>
-            <param>org.apache.bookkeeper.bookie.TestBufferedChannelRead</param>
-            <param>org.apache.bookkeeper.bookie.TestBufferedChannelWrite</param>
+            <param>org.apache.bookkeeper.proto.checksum.TestDigestManagerComputeDigestData</param>
+            <param>org.apache.bookkeeper.proto.checksum.TestDigestManagerGenerateMasterKey</param>
+            <param>org.apache.bookkeeper.proto.checksum.TestDigestManagerRecoveryData</param>
+            <param>org.apache.bookkeeper.proto.checksum.TestDigestManagerVerifyDigestData</param>
+            <param>org.apache.bookkeeper.proto.checksum.TestDigestManagerVerifyDigestLac</param>
           </targetTests>
         </configuration>
       </plugin>

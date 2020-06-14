@@ -65,7 +65,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 public class TestDigestManagerVerifyDigestData {
 
 	private Object result;
-	private static int length = 1;
+	private static int length = 5;
 	private int entryId;
 	private int ledgerId;
 	private DigestType type;
@@ -81,11 +81,15 @@ public class TestDigestManagerVerifyDigestData {
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			
-			// Coverage
+			// Coverage & mutazione
 			{1, 1,  DigestType.CRC32C, generateBadDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
+			
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.CRC32), 0},
-			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 0, DigestType.CRC32), BKDigestMatchException.class}
+			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 0, DigestType.CRC32), BKDigestMatchException.class},
+
 			// Coverage
+			
+			
 		});
 	}
 
@@ -104,7 +108,6 @@ public class TestDigestManagerVerifyDigestData {
 		digestManager = DigestManager.instantiate(ledgerId, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
 		
 		mineByteBuf = generateEntry(length);
-
 	}
 	
 	@Test
@@ -113,7 +116,7 @@ public class TestDigestManagerVerifyDigestData {
 			Assert.assertEquals(mineByteBuf, receivedData.getBuffer(1));
 			try {
 				Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
-			} catch (BKDigestMatchException e) {
+			} catch (Exception e) {
 				Assert.assertEquals(result, e.getClass());
 			}
 	}
@@ -128,13 +131,26 @@ public class TestDigestManagerVerifyDigestData {
 	private static ByteBufList generateBadDataWithDigest(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
 		ByteBuf test1 = generateEntry(length);
 		ByteBuf badHeader = Unpooled.buffer(length);
-		badHeader.writeLong(10);
+		// badHeader.writeLong(10);
+		return ByteBufList.get(badHeader, test1);
+	}
+	
+	private static ByteBufList generateDataWithDigestMutation(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
+		ByteBuf test1 = generateEntryMutation(length);
+		ByteBuf badHeader = Unpooled.buffer(length);
 		return ByteBufList.get(badHeader, test1);
 	}
 
 	private static ByteBuf generateEntry(int length) {
-		byte[] data = new byte[length];
-		ByteBuf bb = Unpooled.buffer(length);
+		byte[] data = "AAAAAAAAAAAAAAAAAAAAAAAAAAA".getBytes();
+		ByteBuf bb = Unpooled.buffer(27+length);
+		bb.writeBytes(data);
+		return bb;
+	}
+	
+	private static ByteBuf generateEntryMutation(int length) {
+		byte[] data = "AAAAAAAAAAAAAAAAAAAAAAA".getBytes();
+		ByteBuf bb = Unpooled.buffer(28+length);
 		bb.writeBytes(data);
 		return bb;
 	}

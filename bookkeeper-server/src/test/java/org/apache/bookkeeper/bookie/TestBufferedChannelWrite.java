@@ -75,7 +75,6 @@ public class TestBufferedChannelWrite {
 			// Mutante 140 non cambia nulla
 		
 		
-			// Coverage
 	}
 
 	public TestBufferedChannelWrite(ByteBuf src, 
