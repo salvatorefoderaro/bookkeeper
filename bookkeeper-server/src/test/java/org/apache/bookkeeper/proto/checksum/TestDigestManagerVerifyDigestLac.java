@@ -54,13 +54,13 @@ public class TestDigestManagerVerifyDigestLac {
 			{generateLacWithDigest(0, DigestType.HMAC,1, false), BKDigestMatchException.class},
 			{generateLacWithDigest(1, DigestType.CRC32C, 1, true), BKDigestMatchException.class},
 			
-			// Coverage
+			/*// Coverage
 			{generateBadLacWithDigest(1), BKDigestMatchException.class},
 			{generateLacWithDigest(-1, DigestType.CRC32, 0, true), BKDigestMatchException.class},
 
 			// Mutation
 			{generateLacWithDigest(0, DigestType.HMAC,1, true), BKDigestMatchException.class},
-
+*/
 		});
 	}
 
