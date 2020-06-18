@@ -76,17 +76,17 @@ public class TestDigestManagerVerifyDigestData {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
+			
+			// Suite minimale
 			{0, 0, DigestType.HMAC,  generateDataWithDigest(0, 1, DigestType.HMAC), BKDigestMatchException.class},
 			{-1, 1,  DigestType.DUMMY, generateDataWithDigest(1, 1, DigestType.DUMMY), BKDigestMatchException.class},
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			
-			// Coverage & mutazione
-			{1, 1,  DigestType.CRC32C, generateBadDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
-			
+			// Coverage
+			{1, 1,  DigestType.CRC32C, generateBadDataWithDigest(1, 1, DigestType.HMAC), IndexOutOfBoundsException.class},
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.CRC32), 0},
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 0, DigestType.CRC32), BKDigestMatchException.class},
-
 			// Coverage
 			
 			
@@ -107,13 +107,12 @@ public class TestDigestManagerVerifyDigestData {
 
 		digestManager = DigestManager.instantiate(ledgerId, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, false);
 		
-		mineByteBuf = generateEntry(length);
+		mineByteBuf = generateEntryMutationBranch(length);
 	}
 	
 	@Test
-	public void testRead() throws GeneralSecurityException{
+	public void testVerifyDigestData() throws GeneralSecurityException{
 
-		Assert.assertEquals(mineByteBuf, receivedData.getBuffer(1));
 		try {
 			Assert.assertEquals(mineByteBuf, digestManager.verifyDigestAndReturnData(entryId, receivedData.coalesce(receivedData)));
 		} catch (Exception e) {
@@ -123,19 +122,19 @@ public class TestDigestManagerVerifyDigestData {
 
 	private static ByteBufList generateDataWithDigest(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
 		DigestManager digest = DigestManager.instantiate(receivedLedgerId, "testPassword".getBytes(), receivedType, UnpooledByteBufAllocator.DEFAULT, false);
-		ByteBuf test1 = generateEntry(length);
-		ByteBufList a = digest.computeDigestAndPackageForSending(receivedEntryId, 0,  length, test1);
-		return a;
+		ByteBuf byteBuf = generateEntryMutationBranch(length);
+		ByteBufList byteBufList = digest.computeDigestAndPackageForSending(receivedEntryId, 0,  length, byteBuf);
+		return byteBufList;
 	}
 	
 	private static ByteBufList generateBadDataWithDigest(int receivedLedgerId, int receivedEntryId, DigestType receivedType) throws GeneralSecurityException {
-		ByteBuf test1 = generateEntry(length);
+		ByteBuf byteBuf = generateEntryMutationBranch(length);
 		ByteBuf badHeader = Unpooled.buffer(length);
-		return ByteBufList.get(badHeader, test1);
+		return ByteBufList.get(badHeader, byteBuf);
 	}
 
-	private static ByteBuf generateEntry(int length) {
-		byte[] data = "AAAAAAAAAAAAAAAAAAAAAAAAAAA".getBytes();
+	private static ByteBuf generateEntryMutationBranch(int length) {
+		byte[] data = "AAAAAAAAAAAAAAAAAAAAAAAAAAAA".getBytes();
 		ByteBuf bb = Unpooled.buffer(27+length);
 		bb.writeBytes(data);
 		return bb;

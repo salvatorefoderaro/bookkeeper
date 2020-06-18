@@ -75,13 +75,15 @@ public class TestDigestManagerComputeDigestData {
 	
 	private DigestType type;
 	private Object result;
-	private DigestManager test;
-	private ByteBuf test1;
+	private DigestManager digestManager;
+	private ByteBuf testEntry;
 	private boolean useV2Protocol;
 
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
+			
+			// Suite minimale
 			{null, -1, -1, 0, DigestType.HMAC,true, NullPointerException.class},
 			{generateEntry(1), 1, 2, 1, DigestType.CRC32, true, 0},
 			{generateEntry(0), 0, 2, 0, DigestType.CRC32C, false, 0},
@@ -105,17 +107,17 @@ public class TestDigestManagerComputeDigestData {
 
 	@Before
 	public void setUp() throws GeneralSecurityException {
-			test = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, useV2Protocol);
+			digestManager = DigestManager.instantiate(1, "testPassword".getBytes(), type, UnpooledByteBufAllocator.DEFAULT, useV2Protocol);
 
-		test1 = generateEntry((int)length);
+		testEntry = generateEntry((int)length);
 	}
 
 	@Test
-	public void testRead() {
+	public void testComputeDigestData() {
 
 		try {
-			ByteBufList a = test.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
-			Assert.assertEquals(test1.readLong(), a.getBuffer(1).readLong());
+			ByteBufList byteBuf = digestManager.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
+			Assert.assertEquals(testEntry.readLong(), byteBuf.getBuffer(1).readLong());
 			
 		} catch (Exception e) {
 			Assert.assertEquals(result, e.getClass());
@@ -124,20 +126,20 @@ public class TestDigestManagerComputeDigestData {
 
 	private static ByteBuf generateEntry(int length) {
 		byte[] data = new byte[length];
-		ByteBuf bb = Unpooled.buffer(1024);
-		bb.writeLong(ledgerId); // Ledger
-		bb.writeLong(entryId); // Entry
-		bb.writeLong(lac); // LAC
-		bb.writeLong(length); // Length
-		bb.writeBytes(data);
-		return bb;
+		ByteBuf byteBuffer = Unpooled.buffer(1024);
+		byteBuffer.writeLong(ledgerId); // Ledger
+		byteBuffer.writeLong(entryId); // Entry
+		byteBuffer.writeLong(lac); // LAC
+		byteBuffer.writeLong(length); // Length
+		byteBuffer.writeBytes(data);
+		return byteBuffer;
 	}
 	
 	private static ByteBuf generateBadEntry(int length) {
 		byte[] data = new byte[length];
-		ByteBuf bb = Unpooled.buffer(1024);
-		bb.writeBytes(data);
-		return bb;
+		ByteBuf byteBuffer = Unpooled.buffer(1024);
+		byteBuffer.writeBytes(data);
+		return byteBuffer;
 	}
 
 }  

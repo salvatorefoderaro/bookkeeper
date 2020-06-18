@@ -81,11 +81,12 @@ public class TestDigestManagerRecoveryData {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
+			
+			// Suite minimale
 			{null, -1, 0, DigestType.HMAC, NullPointerException.class},
 			{generateLastAddConfirmed(1, DigestType.CRC32, 1, true), 2, 1, DigestType.CRC32, BKDigestMatchException.class},
 			{generateLastAddConfirmed(-1, DigestType.CRC32, 1, true), 2, 0, DigestType.CRC32C, BKDigestMatchException.class},
-			{generateLastAddConfirmed(-1, DigestType.CRC32, 1, true), 2, 3, DigestType.DUMMY, (long)1}
-
+			{generateLastAddConfirmed(-1, DigestType.CRC32, 1, false), 2, 3, DigestType.DUMMY, (long)1}
 		});
 	}
 	
@@ -109,12 +110,11 @@ public class TestDigestManagerRecoveryData {
 	}
 
 	@Test
-	public void testRead() {
+	public void testRecoveryData() {
 
 		try {
-			RecoveryData a = test.verifyDigestAndReturnLastConfirmed(data.getBuffer(0));
-			Assert.assertEquals(result, a.getLastAddConfirmed());
-			Assert.assertEquals(0, a.getLength());
+			RecoveryData recoveryData = test.verifyDigestAndReturnLastConfirmed(data.getBuffer(0));
+			Assert.assertEquals(result, recoveryData.getLastAddConfirmed());
 		} catch (Exception e) {
 			Assert.assertEquals(result, e.getClass());
 		}
@@ -122,19 +122,19 @@ public class TestDigestManagerRecoveryData {
 	
 	private static ByteBufList generateLastAddConfirmed(int lacID, DigestType digestType, long ledgerID, boolean useV2Protocol) throws GeneralSecurityException {
 		DigestManager digest = DigestManager.instantiate(ledgerID, "testPassword".getBytes(), digestType, UnpooledByteBufAllocator.DEFAULT, useV2Protocol);
-		ByteBufList a = digest.computeDigestAndPackageForSending(entryId, 1, length, generateEntry(20));
-		return a;
+		ByteBufList byteBufList = digest.computeDigestAndPackageForSending(entryId, 1, length, generateEntry(20));
+		return byteBufList;
 	}
 	
 	private static ByteBuf generateEntry(int length) {
 		byte[] data = new byte[length];
-		ByteBuf bb = Unpooled.buffer(1024);
-		bb.writeLong(ledgerId); // Ledger
-		bb.writeLong(entryId); // Entry
-		bb.writeLong(lac); // LAC
-		bb.writeLong(length); // Length
-		bb.writeBytes(data);
-		return bb;
+		ByteBuf byteBuf = Unpooled.buffer(1024);
+		byteBuf.writeLong(ledgerId); // Ledger
+		byteBuf.writeLong(entryId); // Entry
+		byteBuf.writeLong(lac); // LAC
+		byteBuf.writeLong(length); // Length
+		byteBuf.writeBytes(data);
+		return byteBuf;
 	}
 
 

@@ -48,9 +48,10 @@ public class TestDigestManagerVerifyDigestLac {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
+			
+			// Suite minimale
 			{null, NullPointerException.class},
 			{generateLacWithDigest(-1, DigestType.CRC32, 1, true), (long)-1},
-			
 			{generateLacWithDigest(0, DigestType.HMAC,1, false), BKDigestMatchException.class},
 			{generateLacWithDigest(1, DigestType.CRC32C, 1, true), BKDigestMatchException.class},
 			
@@ -58,7 +59,7 @@ public class TestDigestManagerVerifyDigestLac {
 			{generateBadLacWithDigest(1), BKDigestMatchException.class},
 			{generateLacWithDigest(-1, DigestType.CRC32, 0, true), BKDigestMatchException.class},
 
-			// Mutation
+			// Mutazioni
 			{generateLacWithDigest(0, DigestType.HMAC,1, true), BKDigestMatchException.class},
 		});
 	}
@@ -74,7 +75,7 @@ public class TestDigestManagerVerifyDigestLac {
 	}
 
 	@Test
-	public void testRead() throws GeneralSecurityException {
+	public void testVerifyDigestLac() throws GeneralSecurityException {
 
 		try {
 			Assert.assertEquals(result, digest.verifyDigestAndReturnLac(received.getBuffer(0)));
@@ -85,19 +86,19 @@ public class TestDigestManagerVerifyDigestLac {
 	
 	private static ByteBufList generateLacWithDigest(int lacID, DigestType digestType, long ledgerID, boolean useV2Protocol) throws GeneralSecurityException {
 		DigestManager digest = DigestManager.instantiate(ledgerID, "testPassword".getBytes(), digestType, UnpooledByteBufAllocator.DEFAULT, useV2Protocol);
-		ByteBufList a = digest.computeDigestAndPackageForSendingLac(lacID);
-		return a;
+		ByteBufList byteBufList = digest.computeDigestAndPackageForSendingLac(lacID);
+		return byteBufList;
 	}
 
 	private static ByteBufList generateBadLacWithDigest(int lacID) throws GeneralSecurityException {
 		ByteBuf badHeader = Unpooled.buffer(length);
 		badHeader.writeLong(lacID);
 
-		ByteBuf test1 = Unpooled.buffer(length);
+		ByteBuf byteBuf = Unpooled.buffer(length);
 		
 		byte[] data = new byte[length];
-		test1.writeBytes(data);
-		return ByteBufList.get(badHeader, test1);
+		byteBuf.writeBytes(data);
+		return ByteBufList.get(badHeader, byteBuf);
 	}
 	
 }  

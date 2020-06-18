@@ -39,6 +39,8 @@ public class TestDigestManagerGenerateMasterKey {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() throws Exception {
 		return Arrays.asList(new Object[][] {
+			
+			// Suite minimale
 			{null, NullPointerException.class},
 			{"".getBytes(), true},
 			{"a".getBytes(), true}
@@ -52,7 +54,7 @@ public class TestDigestManagerGenerateMasterKey {
 	}
 
 	@Test
-	public void testRead() {
+	public void testGenerateMasterKey() {
 
 		try {
 			Assert.assertEquals(result, java.util.Arrays.equals(MacDigestManager.genDigest("ledger", data), DigestManager.generateMasterKey(data)));

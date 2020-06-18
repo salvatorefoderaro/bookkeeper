@@ -1,4 +1,5 @@
 /*
+
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -60,6 +61,7 @@ public class TestBufferedChannelRead {
 	private int bufferedChannelLength;
 	private int bufferedChannelUnpersistedBytesBound = 10;
 	private boolean resetIndex;
+	private int writeBufferStartPosition;
 	private Object testResult;
 	
 	private BufferedChannel bufferedChannel;
@@ -68,31 +70,36 @@ public class TestBufferedChannelRead {
 	@Parameterized.Parameters
 	public static Collection BufferedChannelParameters() {
 		return Arrays.asList(new Object[][] {
-			{0, null, -1, 0, true,0},
-			{0, generateEntryWithoutWrite(), 0, 0, false, 0},
+			
+			// Suite minimale
+			{0, null, -1, 0, true,0,0},
+			{0, generateEntryWithoutWrite(1024), 0, 1, false, 0,IOException.class},
+			{0, generateEntryWithoutWrite(1024), 2, 2, false, 0,IllegalArgumentException.class},
 			
 			// Coverage
-			{10, generateEntryWithoutWrite(), 0, 1, false,10},
-			{8, generateEntryWithoutWrite(), 1, 1, false,8},
-			{11, generateEntryWithoutWrite(), 0, 1, true, 8},
-			{8, generateEntryWithoutWrite(), 1, 1, true, 7},
-			{11, generateEntryWithoutWrite(), 0, 1, false, 11},
-			{11, generateEntryWithoutWrite(), 20, 20, false, 20},
+			{10, generateEntryWithoutWrite(1024), 0, 1, false,0,10},
+			{8, generateEntryWithoutWrite(1024), 1, 1, false,0,8},
+			{11, generateEntryWithoutWrite(1024), 0, 1, true,1, 1},
+			{8, generateEntryWithoutWrite(1024), 1, 1, true, 1,8},
+			{11, generateEntryWithoutWrite(1024), 0, 1, false, 0,11},
+			{11, generateEntryWithoutWrite(1024), 20, 20, false, 0,20},
 
-			// Coverage 274 possibile mock, vedere slide. Stessa cosa 258
-			// Mutante 251
-			{11, generateEntryWithoutWrite(), 8, 1, true, IOException.class},
+			// Mutazioni
+			{11, generateEntryWithoutWrite(1024), 8, 1, true, 0,IOException.class},
+			{11, generateEntryWithoutWrite(1024), 8, 1, true, 8,8},
+
 
 		});
 	}
 	
 	public TestBufferedChannelRead(int capacity, ByteBuf dst, long pos, int length, boolean resetIndex,
-			Object result){
+			int writeBufferStartPosition, Object result){
 		this.dstBuffer = dst;
 		this.bufferedChannelPos = pos;
 		this.bufferedChannelLength = length;
 		this.bufferedChannelCapacity = capacity;
 		this.resetIndex = resetIndex;
+		this.writeBufferStartPosition = writeBufferStartPosition;
 		this.testResult = result;
 	}
 
@@ -105,12 +112,17 @@ public class TestBufferedChannelRead {
 		newLogFile.deleteOnExit();
 		bufferedChannelFileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
 
-		bufferedChannel = new BufferedChannel(allocator, bufferedChannelFileChannel,
-				bufferedChannelCapacity, bufferedChannelUnpersistedBytesBound);
-		if (resetIndex)
+		if (resetIndex) {
+			ByteBuffer test = ByteBuffer.allocate(writeBufferStartPosition);
+			bufferedChannelFileChannel.write(test);
 			srcBuffer = generateEntryWithWriteResetIndex(8);
+		}
 		else
 			srcBuffer = generateEntryWithWrite(8);
+		
+		bufferedChannel = new BufferedChannel(allocator, bufferedChannelFileChannel,
+				bufferedChannelCapacity, bufferedChannelUnpersistedBytesBound);
+
 		bufferedChannel.write(srcBuffer);
 	}
 	
@@ -128,10 +140,9 @@ public class TestBufferedChannelRead {
 		}
 	}
 
-	private static ByteBuf generateEntryWithoutWrite() {
-		return Unpooled.buffer(1024);
+	private static ByteBuf generateEntryWithoutWrite(int len) {
+		return Unpooled.buffer(len);
 	}
-
 	
 	private ByteBuf generateEntryWithWriteResetIndex(int length) {
 		Random random = new Random();
