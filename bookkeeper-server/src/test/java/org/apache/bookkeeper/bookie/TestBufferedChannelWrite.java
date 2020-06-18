@@ -59,13 +59,13 @@ public class TestBufferedChannelWrite {
 			{generateEntryWithWrite(0), 1, 0L},
 			{generateEntryWithWrite(1), 1, 1L + HEADER_SIZE},
 			
-			/* // Coverage
+			// Coverage
 			{generateEntryWithWrite(1), -33, (long)0},
 			
 			// Mutante 89
 			{generateEntryWithWrite(1), -32, (long)0},
 			{generateEntryWithWrite(12), -33, (long)40},
-			{generateEntryWithWrite(12), 12, (long)44} */
+			{generateEntryWithWrite(12), 12, (long)44}
 
 			});		
 		

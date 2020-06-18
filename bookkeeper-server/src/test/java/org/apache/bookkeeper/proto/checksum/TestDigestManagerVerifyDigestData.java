@@ -81,12 +81,12 @@ public class TestDigestManagerVerifyDigestData {
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			
-			/*// Coverage & mutazione
+			// Coverage & mutazione
 			{1, 1,  DigestType.CRC32C, generateBadDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.CRC32), 0},
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 0, DigestType.CRC32), BKDigestMatchException.class},
-*/
+
 			// Coverage
 			
 			
