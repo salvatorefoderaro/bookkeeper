@@ -84,7 +84,7 @@ public class TestDigestManagerVerifyDigestData {
 			{1, 1,  DigestType.CRC32C, generateDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			
 			// Coverage
-			{1, 1,  DigestType.CRC32C, generateBadDataWithDigest(1, 1, DigestType.HMAC), IndexOutOfBoundsException.class},
+			{1, 1,  DigestType.CRC32C, generateBadDataWithDigest(1, 1, DigestType.HMAC), BKDigestMatchException.class},
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 1, DigestType.CRC32), 0},
 			{1, 1,  DigestType.CRC32, generateDataWithDigest(1, 0, DigestType.CRC32), BKDigestMatchException.class},
 			// Coverage
@@ -134,15 +134,8 @@ public class TestDigestManagerVerifyDigestData {
 	}
 
 	private static ByteBuf generateEntryMutationBranch(int length) {
-		byte[] data = "AAAAAAAAAAAAAAAAAAAAAAAAAAAA".getBytes();
+		byte[] data = "testString".getBytes();
 		ByteBuf bb = Unpooled.buffer(27+length);
-		bb.writeBytes(data);
-		return bb;
-	}
-	
-	private static ByteBuf generateEntryMutation(int length) {
-		byte[] data = "AAAAAAAAAAAAAAAAAAAAAAA".getBytes();
-		ByteBuf bb = Unpooled.buffer(28+length);
 		bb.writeBytes(data);
 		return bb;
 	}

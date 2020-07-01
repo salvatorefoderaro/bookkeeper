@@ -112,8 +112,8 @@ public class TestBufferedChannelRead {
 		bufferedChannelFileChannel = new RandomAccessFile(newLogFile, "rw").getChannel();
 
 		if (resetIndex) {
-			ByteBuffer test = ByteBuffer.allocate(writeBufferStartPosition);
-			bufferedChannelFileChannel.write(test);
+			ByteBuffer byteBuffer = ByteBuffer.allocate(writeBufferStartPosition);
+			bufferedChannelFileChannel.write(byteBuffer);
 			srcBuffer = generateEntryWithWriteResetIndex(8);
 		}
 		else
@@ -133,6 +133,7 @@ public class TestBufferedChannelRead {
 	@Test
 	public void testRead() {
 		try {
+			 // Assert that the number of readed bytes is equal to the expected value
 			 Assert.assertEquals(testResult, bufferedChannel.read(dstBuffer, bufferedChannelPos, bufferedChannelLength));		 
 		} catch (Exception e) {
 			Assert.assertEquals(testResult, e.getClass());

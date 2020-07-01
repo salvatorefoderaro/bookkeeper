@@ -94,6 +94,7 @@ public class TestBufferedChannelWrite {
 
 			try {
 				bufferedChannel.write(src);
+				// Assert that the size of the filechannel is equal to the expected value
 				Assert.assertEquals((long)result, bufferedChannel.fileChannel.size());
 			} catch (Exception e){
 				Assert.assertEquals(result, bufferedChannel.fileChannel.size());

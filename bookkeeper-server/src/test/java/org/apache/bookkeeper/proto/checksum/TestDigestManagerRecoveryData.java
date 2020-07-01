@@ -114,6 +114,7 @@ public class TestDigestManagerRecoveryData {
 
 		try {
 			RecoveryData recoveryData = test.verifyDigestAndReturnLastConfirmed(data.getBuffer(0));
+			// Assert that the LAC contained in the recoveryData is equal to the expected value
 			Assert.assertEquals(result, recoveryData.getLastAddConfirmed());
 		} catch (Exception e) {
 			Assert.assertEquals(result, e.getClass());

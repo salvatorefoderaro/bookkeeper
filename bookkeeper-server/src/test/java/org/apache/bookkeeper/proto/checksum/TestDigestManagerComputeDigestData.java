@@ -116,6 +116,7 @@ public class TestDigestManagerComputeDigestData {
 	public void testComputeDigestData() {
 
 		try {
+			// Assert that the buffer of data contained in the byteBuf is equal to what sent
 			ByteBufList byteBuf = digestManager.computeDigestAndPackageForSending(entryId, lastAddConfirmed, length, data);
 			Assert.assertEquals(testEntry.readLong(), byteBuf.getBuffer(1).readLong());
 			

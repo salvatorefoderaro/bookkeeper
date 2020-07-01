@@ -93,9 +93,7 @@ public class TestDigestManagerVerifyDigestLac {
 	private static ByteBufList generateBadLacWithDigest(int lacID) throws GeneralSecurityException {
 		ByteBuf badHeader = Unpooled.buffer(length);
 		badHeader.writeLong(lacID);
-
 		ByteBuf byteBuf = Unpooled.buffer(length);
-		
 		byte[] data = new byte[length];
 		byteBuf.writeBytes(data);
 		return ByteBufList.get(badHeader, byteBuf);
