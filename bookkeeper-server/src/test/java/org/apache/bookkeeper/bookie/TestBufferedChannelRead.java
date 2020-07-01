@@ -72,9 +72,9 @@ public class TestBufferedChannelRead {
 		return Arrays.asList(new Object[][] {
 			
 			// Suite minimale
-			{0, null, -1, 0, true,0,0},
-			{0, generateEntryWithoutWrite(1024), 0, 1, false, 0,IOException.class},
-			{0, generateEntryWithoutWrite(1024), 2, 2, false, 0,IllegalArgumentException.class},
+			{1, null, -1, 0, true,0,0},
+			{1, generateEntryWithoutWrite(1024), 0, 1, false, 0,1},
+			{1, generateEntryWithoutWrite(1024), 2, 2, false, 0,2},
 			
 			// Coverage
 			{10, generateEntryWithoutWrite(1024), 0, 1, false,0,10},
@@ -87,7 +87,6 @@ public class TestBufferedChannelRead {
 			// Mutazioni
 			{11, generateEntryWithoutWrite(1024), 8, 1, true, 0,IOException.class},
 			{11, generateEntryWithoutWrite(1024), 8, 1, true, 8,8},
-
 
 		});
 	}

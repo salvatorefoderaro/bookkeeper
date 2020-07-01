@@ -113,10 +113,6 @@ public class BufferedChannel extends BufferedReadChannel implements Closeable {
 		synchronized (this) {   
 			int len = src.readableBytes();
 
-			// Codice aggiunto
-			if (writeCapacity == 0)
-				len = 0;
-
 			while (copied < len) {
 				int bytesToCopy = Math.min(src.readableBytes() - copied, writeBuffer.writableBytes());
 				writeBuffer.writeBytes(src, src.readerIndex() + copied, bytesToCopy);
@@ -239,10 +235,6 @@ public class BufferedChannel extends BufferedReadChannel implements Closeable {
 	@Override
 	public synchronized int read(ByteBuf dest, long pos, int length) throws IOException {
 		long prevPos = pos;
-		
-			/* if (dest.writableBytes() == 0)
-				length = 0;
-			*/
 		
 		while (length > 0) {
 			// check if it is in the write buffer
